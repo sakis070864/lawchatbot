@@ -54,10 +54,11 @@ app.post('/api/save-case', async (req, res) => {
         const collection = database.collection("cases");
 
         // 4. Create the document to be inserted
-        // **FIX:** Only saving the professional summary, not the raw chat history.
+        // **FIX:** Saving both the professional summary AND the full chat history as a backup.
         const caseDocument = {
             caseId: caseData.caseId,
-            caseSummary: caseData.summary, // This is the professional report
+            caseSummary: caseData.summary,
+            chatHistory: caseData.history, // Added full transcript as a fail-safe
             attachedFiles: caseData.files,
             createdAt: new Date() // Use server time for accuracy
         };
