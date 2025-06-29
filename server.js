@@ -21,9 +21,8 @@ if (!uri) {
 }
 
 // --- Middleware ---
-// **FIX:** Added a more explicit CORS configuration to ensure requests are allowed.
 app.use(cors({
-  origin: '*' // Allows requests from any origin. For production, you might restrict this.
+  origin: '*' // Allows requests from any origin.
 }));
 app.use(express.json()); // Allows the server to understand JSON data
 
@@ -39,9 +38,11 @@ const client = new MongoClient(uri, {
 // --- API Endpoint ---
 // This endpoint will receive the case summary and save it to the database
 app.post('/api/save-case', async (req, res) => {
+    let mongoClient;
     try {
-        // 1. Connect to the database
-        await client.connect();
+        // Create a new client and connect for each request
+        mongoClient = new MongoClient(uri);
+        await mongoClient.connect();
         console.log("Successfully connected to MongoDB Atlas!");
 
         // 2. Get the data sent from the frontend
@@ -49,14 +50,14 @@ app.post('/api/save-case', async (req, res) => {
         console.log("Received case data:", caseData);
 
         // 3. Define the database and collection
-        const database = client.db("legal_intake_db");
+        const database = mongoClient.db("legal_intake_db");
         const collection = database.collection("cases");
 
         // 4. Create the document to be inserted
+        // **FIX:** Only saving the professional summary, not the raw chat history.
         const caseDocument = {
             caseId: caseData.caseId,
-            caseSummary: caseData.summary,
-            chatHistory: caseData.history,
+            caseSummary: caseData.summary, // This is the professional report
             attachedFiles: caseData.files,
             createdAt: new Date() // Use server time for accuracy
         };
@@ -77,8 +78,10 @@ app.post('/api/save-case', async (req, res) => {
         res.status(500).json({ message: 'Error saving case to database' });
     } finally {
         // Ensures that the client will close when you finish/error
-        await client.close();
-        console.log("MongoDB connection closed.");
+        if (mongoClient) {
+            await mongoClient.close();
+            console.log("MongoDB connection closed.");
+        }
     }
 });
 
