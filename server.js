@@ -21,7 +21,10 @@ if (!uri) {
 }
 
 // --- Middleware ---
-app.use(cors()); // Allows the frontend to communicate with this server
+// **FIX:** Added a more explicit CORS configuration to ensure requests are allowed.
+app.use(cors({
+  origin: '*' // Allows requests from any origin. For production, you might restrict this.
+}));
 app.use(express.json()); // Allows the server to understand JSON data
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
